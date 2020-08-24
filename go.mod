@@ -14,11 +14,13 @@ require (
 	github.com/go-swagger/go-swagger v0.25.0 // indirect
 	github.com/gorilla/handlers v1.5.0 // indirect
 	github.com/gorilla/websocket v1.4.2
+	github.com/iancoleman/strcase v0.1.0
 	github.com/kr/pretty v0.2.1 // indirect
 	github.com/mailru/easyjson v0.7.6 // indirect
 	github.com/mitchellh/mapstructure v1.3.3 // indirect
 	github.com/spf13/afero v1.3.4 // indirect
 	github.com/spf13/viper v1.7.1 // indirect
+	github.com/stretchr/testify v1.6.1
 	go.mongodb.org/mongo-driver v1.4.0 // indirect
 	golang.org/x/net v0.0.0-20200822124328-c89045814202 // indirect
 	golang.org/x/sys v0.0.0-20200824131525-c12d262b63d8 // indirect
