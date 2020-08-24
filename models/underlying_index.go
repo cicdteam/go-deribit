@@ -12,7 +12,7 @@ import (
 // UnderlyingIndex Name of the underlying future, or `index_price` (options only)
 //
 // swagger:model underlying_index
-type UnderlyingIndex float64
+type UnderlyingIndex string
 
 // Validate validates this underlying index
 func (m UnderlyingIndex) Validate(formats strfmt.Registry) error {

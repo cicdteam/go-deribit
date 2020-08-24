@@ -5479,7 +5479,7 @@
     },
     "underlying_index": {
       "description": "Name of the underlying future, or `index_price` (options only)",
-      "type": "string"
+      "type": "number"
     },
     "underlying_price": {
       "description": "Underlying price for implied volatility calculations (options only)",
