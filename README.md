@@ -1,4 +1,3 @@
-[![Build Status](https://travis-ci.com/adampointer/go-deribit.svg?branch=master)](https://travis-ci.com/adampointer/go-deribit)  [![Go Report Card](https://goreportcard.com/badge/github.com/adampointer/go-deribit)](https://goreportcard.com/report/github.com/adampointer/go-deribit)  [![codebeat badge](https://codebeat.co/badges/5bf32114-b7e1-4e70-91bf-fae2449fe2cb)](https://codebeat.co/projects/github-com-adampointer-go-deribit-master)
 
 # go-deribit
 
@@ -10,13 +9,13 @@ I do not have the time to look after this project. It was good fun but all good 
 
 This project is now using go1.13 with Go Modules, but should remain compatible with `dep`. Also, as there are some breaking changes introduced by the latest schema changes from the remote API, I have decided to carry on development in the new `v3` namespace with the project root containing the code tagged `v2.x`.
 
-`import "github.com/adampointer/go-deribit/v3"`
+`import "github.com/cicdteam/go-deribit/v3"`
 
 We now have the latest API methods which were recently released such as `public/get_tradingview_chart_data`.
 
 I recommend using the `v3` project in your projects as all onward development will now be within this project.
 
-[GoDoc API Documentation](https://godoc.org/github.com/adampointer/go-deribit/v3)
+[GoDoc API Documentation](https://godoc.org/github.com/cicdteam/go-deribit/v3)
 
 ## Overview
 
@@ -25,19 +24,6 @@ Go library for using the [Deribit's](https://www.deribit.com/reg-3027.8327) **v2
 Deribit is a modern, fast BitCoin derivatives exchange. 
 
 This library is a port of the [official wrapper libraries](https://github.com/deribit) to Go.
-
-If you wish to try it out, be kind and use my affiliate link [https://www.deribit.com/reg-3027.8327](https://www.deribit.com/reg-3027.8327)
-
-Or tip me!
-
-btc: 3HmLfHJvrJuM48zHFY6HstUCxbuwV3dvxd
-
-eth: 0x9Dc9129185E79211534D0039Af1C6f1ff585F5e3
-
-ltc: MEpFjCdR3uXd6QjuJTSu3coLtcSWY3S2Hg
-
-
-*p.s.* If you want a good BitMEX client library then try [go-bitmex](https://github.com/adampointer/go-bitmex)
 
 [V2 API Documentation](http://docs.deribit.com/v2/?javascript#deribit-api-v2-0-0)
 

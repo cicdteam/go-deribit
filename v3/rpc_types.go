@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/adampointer/go-deribit/v3/models"
+	"github.com/cicdteam/go-deribit/v3/models"
 
 	"github.com/go-openapi/runtime"
 )

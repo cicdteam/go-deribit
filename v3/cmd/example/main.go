@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/adampointer/go-deribit/v3"
-	"github.com/adampointer/go-deribit/v3/client/account_management"
-	"github.com/adampointer/go-deribit/v3/client/private"
-	"github.com/adampointer/go-deribit/v3/client/public"
+	"github.com/cicdteam/go-deribit/v3"
+	"github.com/cicdteam/go-deribit/v3/client/account_management"
+	"github.com/cicdteam/go-deribit/v3/client/private"
+	"github.com/cicdteam/go-deribit/v3/client/public"
 	flag "github.com/spf13/pflag"
 )
 

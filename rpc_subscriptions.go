@@ -6,16 +6,16 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/adampointer/go-deribit/client/operations"
-	"github.com/adampointer/go-deribit/models"
+	"github.com/cicdteam/go-deribit/client/operations"
+	"github.com/cicdteam/go-deribit/models"
 )
 
-// SubscribeDeribitPriceIndex subscribes to the deribit_price_index.{index_name} channel
-func (e *Exchange) SubscribeDeribitPriceIndex(index_name string) (chan *models.DeribitPriceIndexNotification, error) {
-	chans := []string{fmt.Sprintf("deribit_price_index.%s", index_name)}
+// SubscribeQuote subscribes to the quote.{instrument_name} channel
+func (e *Exchange) SubscribeQuote(instrument_name string) (chan *models.QuoteNotification, error) {
+	chans := []string{fmt.Sprintf("quote.%s", instrument_name)}
 
 	c := make(chan *RPCNotification)
-	out := make(chan *models.DeribitPriceIndexNotification)
+	out := make(chan *models.QuoteNotification)
 	sub := &RPCSubscription{Data: c, Channel: chans[0]}
 	e.subscriptions[chans[0]] = sub
 
@@ -36,63 +36,13 @@ func (e *Exchange) SubscribeDeribitPriceIndex(index_name string) (chan *models.D
 				}
 				switch byte(n.Params.Data[0]) {
 				case '{':
-					var ret models.DeribitPriceIndexNotification
+					var ret models.QuoteNotification
 					if err := json.Unmarshal(n.Params.Data, &ret); err != nil {
 						e.errors <- fmt.Errorf("error decoding notification: %s", err)
 					}
 					out <- &ret
 				case '[':
-					var rets []models.DeribitPriceIndexNotification
-					if err := json.Unmarshal(n.Params.Data, &rets); err != nil {
-						e.errors <- fmt.Errorf("error decoding notification: %s", err)
-					}
-					for _, ret := range rets {
-						out <- &ret
-					}
-				default:
-					e.errors <- fmt.Errorf("invalid json data: %s", string(n.Params.Data))
-				}
-			case <-e.stop:
-				break Loop
-			}
-		}
-	}()
-	return out, nil
-}
-
-// SubscribeTicker subscribes to the ticker.{instrument_name}.{interval} channel
-func (e *Exchange) SubscribeTicker(instrument_name, interval string) (chan *models.TickerNotification, error) {
-	chans := []string{fmt.Sprintf("ticker.%s.%s", instrument_name, interval)}
-
-	c := make(chan *RPCNotification)
-	out := make(chan *models.TickerNotification)
-	sub := &RPCSubscription{Data: c, Channel: chans[0]}
-	e.subscriptions[chans[0]] = sub
-
-	client := e.Client()
-	if _, err := client.GetPublicSubscribe(&operations.GetPublicSubscribeParams{Channels: chans}); err != nil {
-		delete(e.subscriptions, chans[0])
-		return nil, fmt.Errorf("error subscribing to channel: %s", err)
-	}
-
-	go func() {
-	Loop:
-		for {
-			select {
-			case n := <-c:
-				if len(n.Params.Data) < 1 {
-					e.errors <- fmt.Errorf("invalid json data: %s", string(n.Params.Data))
-					continue
-				}
-				switch byte(n.Params.Data[0]) {
-				case '{':
-					var ret models.TickerNotification
-					if err := json.Unmarshal(n.Params.Data, &ret); err != nil {
-						e.errors <- fmt.Errorf("error decoding notification: %s", err)
-					}
-					out <- &ret
-				case '[':
-					var rets []models.TickerNotification
+					var rets []models.QuoteNotification
 					if err := json.Unmarshal(n.Params.Data, &rets); err != nil {
 						e.errors <- fmt.Errorf("error decoding notification: %s", err)
 					}
@@ -210,17 +160,17 @@ func (e *Exchange) SubscribeUserTradesKind(kind, currency, interval string) (cha
 	return out, nil
 }
 
-// SubscribeEstimatedExpirationPrice subscribes to the estimated_expiration_price.{index_name} channel
-func (e *Exchange) SubscribeEstimatedExpirationPrice(index_name string) (chan *models.EstimatedExpirationPriceNotification, error) {
-	chans := []string{fmt.Sprintf("estimated_expiration_price.%s", index_name)}
+// SubscribeAnnouncements subscribes to the announcements channel
+func (e *Exchange) SubscribeAnnouncements(kind, currency, interval string) (chan *models.AnnouncementNotification, error) {
+	chans := []string{fmt.Sprintf("announcements", kind, currency, interval)}
 
 	c := make(chan *RPCNotification)
-	out := make(chan *models.EstimatedExpirationPriceNotification)
+	out := make(chan *models.AnnouncementNotification)
 	sub := &RPCSubscription{Data: c, Channel: chans[0]}
 	e.subscriptions[chans[0]] = sub
 
 	client := e.Client()
-	if _, err := client.GetPublicSubscribe(&operations.GetPublicSubscribeParams{Channels: chans}); err != nil {
+	if _, err := client.GetPrivateSubscribe(&operations.GetPrivateSubscribeParams{Channels: chans}); err != nil {
 		delete(e.subscriptions, chans[0])
 		return nil, fmt.Errorf("error subscribing to channel: %s", err)
 	}
@@ -236,13 +186,13 @@ func (e *Exchange) SubscribeEstimatedExpirationPrice(index_name string) (chan *m
 				}
 				switch byte(n.Params.Data[0]) {
 				case '{':
-					var ret models.EstimatedExpirationPriceNotification
+					var ret models.AnnouncementNotification
 					if err := json.Unmarshal(n.Params.Data, &ret); err != nil {
 						e.errors <- fmt.Errorf("error decoding notification: %s", err)
 					}
 					out <- &ret
 				case '[':
-					var rets []models.EstimatedExpirationPriceNotification
+					var rets []models.AnnouncementNotification
 					if err := json.Unmarshal(n.Params.Data, &rets); err != nil {
 						e.errors <- fmt.Errorf("error decoding notification: %s", err)
 					}
@@ -260,12 +210,12 @@ func (e *Exchange) SubscribeEstimatedExpirationPrice(index_name string) (chan *m
 	return out, nil
 }
 
-// SubscribePerpetual subscribes to the perpetual.{instrument_name}.{interval} channel
-func (e *Exchange) SubscribePerpetual(instrument_name, interval string) (chan *models.PerpetualNotification, error) {
-	chans := []string{fmt.Sprintf("perpetual.%s.%s", instrument_name, interval)}
+// SubscribeBookGroup subscribes to the book.{instrument_name}.{group}.{depth}.{interval} channel
+func (e *Exchange) SubscribeBookGroup(instrument_name, group, depth, interval string) (chan *models.BookNotification, error) {
+	chans := []string{fmt.Sprintf("book.%s.%s.%s.%s", instrument_name, group, depth, interval)}
 
 	c := make(chan *RPCNotification)
-	out := make(chan *models.PerpetualNotification)
+	out := make(chan *models.BookNotification)
 	sub := &RPCSubscription{Data: c, Channel: chans[0]}
 	e.subscriptions[chans[0]] = sub
 
@@ -286,13 +236,163 @@ func (e *Exchange) SubscribePerpetual(instrument_name, interval string) (chan *m
 				}
 				switch byte(n.Params.Data[0]) {
 				case '{':
-					var ret models.PerpetualNotification
+					var ret models.BookNotification
 					if err := json.Unmarshal(n.Params.Data, &ret); err != nil {
 						e.errors <- fmt.Errorf("error decoding notification: %s", err)
 					}
 					out <- &ret
 				case '[':
-					var rets []models.PerpetualNotification
+					var rets []models.BookNotification
+					if err := json.Unmarshal(n.Params.Data, &rets); err != nil {
+						e.errors <- fmt.Errorf("error decoding notification: %s", err)
+					}
+					for _, ret := range rets {
+						out <- &ret
+					}
+				default:
+					e.errors <- fmt.Errorf("invalid json data: %s", string(n.Params.Data))
+				}
+			case <-e.stop:
+				break Loop
+			}
+		}
+	}()
+	return out, nil
+}
+
+// SubscribeDeribitPriceRanking subscribes to the deribit_price_ranking.{index_name} channel
+func (e *Exchange) SubscribeDeribitPriceRanking(index_name string) (chan *models.DeribitPriceRankingNotification, error) {
+	chans := []string{fmt.Sprintf("deribit_price_ranking.%s", index_name)}
+
+	c := make(chan *RPCNotification)
+	out := make(chan *models.DeribitPriceRankingNotification)
+	sub := &RPCSubscription{Data: c, Channel: chans[0]}
+	e.subscriptions[chans[0]] = sub
+
+	client := e.Client()
+	if _, err := client.GetPublicSubscribe(&operations.GetPublicSubscribeParams{Channels: chans}); err != nil {
+		delete(e.subscriptions, chans[0])
+		return nil, fmt.Errorf("error subscribing to channel: %s", err)
+	}
+
+	go func() {
+	Loop:
+		for {
+			select {
+			case n := <-c:
+				if len(n.Params.Data) < 1 {
+					e.errors <- fmt.Errorf("invalid json data: %s", string(n.Params.Data))
+					continue
+				}
+				switch byte(n.Params.Data[0]) {
+				case '{':
+					var ret models.DeribitPriceRankingNotification
+					if err := json.Unmarshal(n.Params.Data, &ret); err != nil {
+						e.errors <- fmt.Errorf("error decoding notification: %s", err)
+					}
+					out <- &ret
+				case '[':
+					var rets []models.DeribitPriceRankingNotification
+					if err := json.Unmarshal(n.Params.Data, &rets); err != nil {
+						e.errors <- fmt.Errorf("error decoding notification: %s", err)
+					}
+					for _, ret := range rets {
+						out <- &ret
+					}
+				default:
+					e.errors <- fmt.Errorf("invalid json data: %s", string(n.Params.Data))
+				}
+			case <-e.stop:
+				break Loop
+			}
+		}
+	}()
+	return out, nil
+}
+
+// SubscribeUserOrdersInstrumentName subscribes to the user.orders.{instrument_name}.{interval} channel
+func (e *Exchange) SubscribeUserOrdersInstrumentName(instrument_name, interval string) (chan *models.Order, error) {
+	chans := []string{fmt.Sprintf("user.orders.%s.%s", instrument_name, interval)}
+
+	c := make(chan *RPCNotification)
+	out := make(chan *models.Order)
+	sub := &RPCSubscription{Data: c, Channel: chans[0]}
+	e.subscriptions[chans[0]] = sub
+
+	client := e.Client()
+	if _, err := client.GetPrivateSubscribe(&operations.GetPrivateSubscribeParams{Channels: chans}); err != nil {
+		delete(e.subscriptions, chans[0])
+		return nil, fmt.Errorf("error subscribing to channel: %s", err)
+	}
+
+	go func() {
+	Loop:
+		for {
+			select {
+			case n := <-c:
+				if len(n.Params.Data) < 1 {
+					e.errors <- fmt.Errorf("invalid json data: %s", string(n.Params.Data))
+					continue
+				}
+				switch byte(n.Params.Data[0]) {
+				case '{':
+					var ret models.Order
+					if err := json.Unmarshal(n.Params.Data, &ret); err != nil {
+						e.errors <- fmt.Errorf("error decoding notification: %s", err)
+					}
+					out <- &ret
+				case '[':
+					var rets []models.Order
+					if err := json.Unmarshal(n.Params.Data, &rets); err != nil {
+						e.errors <- fmt.Errorf("error decoding notification: %s", err)
+					}
+					for _, ret := range rets {
+						out <- &ret
+					}
+				default:
+					e.errors <- fmt.Errorf("invalid json data: %s", string(n.Params.Data))
+				}
+			case <-e.stop:
+				break Loop
+			}
+		}
+	}()
+	return out, nil
+}
+
+// SubscribeBookInterval subscribes to the book.{instrument_name}.{interval} channel
+func (e *Exchange) SubscribeBookInterval(instrument_name, interval string) (chan *models.BookNotificationRaw, error) {
+	chans := []string{fmt.Sprintf("book.%s.%s", instrument_name, interval)}
+
+	c := make(chan *RPCNotification)
+	out := make(chan *models.BookNotificationRaw)
+	sub := &RPCSubscription{Data: c, Channel: chans[0]}
+	e.subscriptions[chans[0]] = sub
+
+	client := e.Client()
+	if _, err := client.GetPublicSubscribe(&operations.GetPublicSubscribeParams{Channels: chans}); err != nil {
+		delete(e.subscriptions, chans[0])
+		return nil, fmt.Errorf("error subscribing to channel: %s", err)
+	}
+
+	go func() {
+	Loop:
+		for {
+			select {
+			case n := <-c:
+				if len(n.Params.Data) < 1 {
+					e.errors <- fmt.Errorf("invalid json data: %s", string(n.Params.Data))
+					continue
+				}
+				switch byte(n.Params.Data[0]) {
+				case '{':
+					var ret models.BookNotificationRaw
+					if err := json.Unmarshal(n.Params.Data, &ret); err != nil {
+						e.errors <- fmt.Errorf("error decoding notification: %s", err)
+					}
+					out <- &ret
+				case '[':
+					var rets []models.BookNotificationRaw
 					if err := json.Unmarshal(n.Params.Data, &rets); err != nil {
 						e.errors <- fmt.Errorf("error decoding notification: %s", err)
 					}
@@ -410,12 +510,12 @@ func (e *Exchange) SubscribeUserPortfolio(currency string) (chan *models.UserPor
 	return out, nil
 }
 
-// SubscribeBookGroup subscribes to the book.{instrument_name}.{group}.{depth}.{interval} channel
-func (e *Exchange) SubscribeBookGroup(instrument_name, group, depth, interval string) (chan *models.BookNotification, error) {
-	chans := []string{fmt.Sprintf("book.%s.%s.%s.%s", instrument_name, group, depth, interval)}
+// SubscribeEstimatedExpirationPrice subscribes to the estimated_expiration_price.{index_name} channel
+func (e *Exchange) SubscribeEstimatedExpirationPrice(index_name string) (chan *models.EstimatedExpirationPriceNotification, error) {
+	chans := []string{fmt.Sprintf("estimated_expiration_price.%s", index_name)}
 
 	c := make(chan *RPCNotification)
-	out := make(chan *models.BookNotification)
+	out := make(chan *models.EstimatedExpirationPriceNotification)
 	sub := &RPCSubscription{Data: c, Channel: chans[0]}
 	e.subscriptions[chans[0]] = sub
 
@@ -436,13 +536,13 @@ func (e *Exchange) SubscribeBookGroup(instrument_name, group, depth, interval st
 				}
 				switch byte(n.Params.Data[0]) {
 				case '{':
-					var ret models.BookNotification
+					var ret models.EstimatedExpirationPriceNotification
 					if err := json.Unmarshal(n.Params.Data, &ret); err != nil {
 						e.errors <- fmt.Errorf("error decoding notification: %s", err)
 					}
 					out <- &ret
 				case '[':
-					var rets []models.BookNotification
+					var rets []models.EstimatedExpirationPriceNotification
 					if err := json.Unmarshal(n.Params.Data, &rets); err != nil {
 						e.errors <- fmt.Errorf("error decoding notification: %s", err)
 					}
@@ -460,12 +560,12 @@ func (e *Exchange) SubscribeBookGroup(instrument_name, group, depth, interval st
 	return out, nil
 }
 
-// SubscribeBookInterval subscribes to the book.{instrument_name}.{interval} channel
-func (e *Exchange) SubscribeBookInterval(instrument_name, interval string) (chan *models.BookNotificationRaw, error) {
-	chans := []string{fmt.Sprintf("book.%s.%s", instrument_name, interval)}
+// SubscribeTicker subscribes to the ticker.{instrument_name}.{interval} channel
+func (e *Exchange) SubscribeTicker(instrument_name, interval string) (chan *models.TickerNotification, error) {
+	chans := []string{fmt.Sprintf("ticker.%s.%s", instrument_name, interval)}
 
 	c := make(chan *RPCNotification)
-	out := make(chan *models.BookNotificationRaw)
+	out := make(chan *models.TickerNotification)
 	sub := &RPCSubscription{Data: c, Channel: chans[0]}
 	e.subscriptions[chans[0]] = sub
 
@@ -486,13 +586,13 @@ func (e *Exchange) SubscribeBookInterval(instrument_name, interval string) (chan
 				}
 				switch byte(n.Params.Data[0]) {
 				case '{':
-					var ret models.BookNotificationRaw
+					var ret models.TickerNotification
 					if err := json.Unmarshal(n.Params.Data, &ret); err != nil {
 						e.errors <- fmt.Errorf("error decoding notification: %s", err)
 					}
 					out <- &ret
 				case '[':
-					var rets []models.BookNotificationRaw
+					var rets []models.TickerNotification
 					if err := json.Unmarshal(n.Params.Data, &rets); err != nil {
 						e.errors <- fmt.Errorf("error decoding notification: %s", err)
 					}
@@ -510,12 +610,12 @@ func (e *Exchange) SubscribeBookInterval(instrument_name, interval string) (chan
 	return out, nil
 }
 
-// SubscribeQuote subscribes to the quote.{instrument_name} channel
-func (e *Exchange) SubscribeQuote(instrument_name string) (chan *models.QuoteNotification, error) {
-	chans := []string{fmt.Sprintf("quote.%s", instrument_name)}
+// SubscribePerpetual subscribes to the perpetual.{instrument_name}.{interval} channel
+func (e *Exchange) SubscribePerpetual(instrument_name, interval string) (chan *models.PerpetualNotification, error) {
+	chans := []string{fmt.Sprintf("perpetual.%s.%s", instrument_name, interval)}
 
 	c := make(chan *RPCNotification)
-	out := make(chan *models.QuoteNotification)
+	out := make(chan *models.PerpetualNotification)
 	sub := &RPCSubscription{Data: c, Channel: chans[0]}
 	e.subscriptions[chans[0]] = sub
 
@@ -536,63 +636,13 @@ func (e *Exchange) SubscribeQuote(instrument_name string) (chan *models.QuoteNot
 				}
 				switch byte(n.Params.Data[0]) {
 				case '{':
-					var ret models.QuoteNotification
+					var ret models.PerpetualNotification
 					if err := json.Unmarshal(n.Params.Data, &ret); err != nil {
 						e.errors <- fmt.Errorf("error decoding notification: %s", err)
 					}
 					out <- &ret
 				case '[':
-					var rets []models.QuoteNotification
-					if err := json.Unmarshal(n.Params.Data, &rets); err != nil {
-						e.errors <- fmt.Errorf("error decoding notification: %s", err)
-					}
-					for _, ret := range rets {
-						out <- &ret
-					}
-				default:
-					e.errors <- fmt.Errorf("invalid json data: %s", string(n.Params.Data))
-				}
-			case <-e.stop:
-				break Loop
-			}
-		}
-	}()
-	return out, nil
-}
-
-// SubscribeUserOrdersInstrumentName subscribes to the user.orders.{instrument_name}.{interval} channel
-func (e *Exchange) SubscribeUserOrdersInstrumentName(instrument_name, interval string) (chan *models.Order, error) {
-	chans := []string{fmt.Sprintf("user.orders.%s.%s", instrument_name, interval)}
-
-	c := make(chan *RPCNotification)
-	out := make(chan *models.Order)
-	sub := &RPCSubscription{Data: c, Channel: chans[0]}
-	e.subscriptions[chans[0]] = sub
-
-	client := e.Client()
-	if _, err := client.GetPrivateSubscribe(&operations.GetPrivateSubscribeParams{Channels: chans}); err != nil {
-		delete(e.subscriptions, chans[0])
-		return nil, fmt.Errorf("error subscribing to channel: %s", err)
-	}
-
-	go func() {
-	Loop:
-		for {
-			select {
-			case n := <-c:
-				if len(n.Params.Data) < 1 {
-					e.errors <- fmt.Errorf("invalid json data: %s", string(n.Params.Data))
-					continue
-				}
-				switch byte(n.Params.Data[0]) {
-				case '{':
-					var ret models.Order
-					if err := json.Unmarshal(n.Params.Data, &ret); err != nil {
-						e.errors <- fmt.Errorf("error decoding notification: %s", err)
-					}
-					out <- &ret
-				case '[':
-					var rets []models.Order
+					var rets []models.PerpetualNotification
 					if err := json.Unmarshal(n.Params.Data, &rets); err != nil {
 						e.errors <- fmt.Errorf("error decoding notification: %s", err)
 					}
@@ -660,62 +710,12 @@ func (e *Exchange) SubscribeUserTradesInstrument(instrument_name, interval strin
 	return out, nil
 }
 
-// SubscribeAnnouncements subscribes to the announcements channel
-func (e *Exchange) SubscribeAnnouncements(instrument_name, interval string) (chan *models.AnnouncementNotification, error) {
-	chans := []string{fmt.Sprintf("announcements", instrument_name, interval)}
+// SubscribeDeribitPriceIndex subscribes to the deribit_price_index.{index_name} channel
+func (e *Exchange) SubscribeDeribitPriceIndex(index_name string) (chan *models.DeribitPriceIndexNotification, error) {
+	chans := []string{fmt.Sprintf("deribit_price_index.%s", index_name)}
 
 	c := make(chan *RPCNotification)
-	out := make(chan *models.AnnouncementNotification)
-	sub := &RPCSubscription{Data: c, Channel: chans[0]}
-	e.subscriptions[chans[0]] = sub
-
-	client := e.Client()
-	if _, err := client.GetPrivateSubscribe(&operations.GetPrivateSubscribeParams{Channels: chans}); err != nil {
-		delete(e.subscriptions, chans[0])
-		return nil, fmt.Errorf("error subscribing to channel: %s", err)
-	}
-
-	go func() {
-	Loop:
-		for {
-			select {
-			case n := <-c:
-				if len(n.Params.Data) < 1 {
-					e.errors <- fmt.Errorf("invalid json data: %s", string(n.Params.Data))
-					continue
-				}
-				switch byte(n.Params.Data[0]) {
-				case '{':
-					var ret models.AnnouncementNotification
-					if err := json.Unmarshal(n.Params.Data, &ret); err != nil {
-						e.errors <- fmt.Errorf("error decoding notification: %s", err)
-					}
-					out <- &ret
-				case '[':
-					var rets []models.AnnouncementNotification
-					if err := json.Unmarshal(n.Params.Data, &rets); err != nil {
-						e.errors <- fmt.Errorf("error decoding notification: %s", err)
-					}
-					for _, ret := range rets {
-						out <- &ret
-					}
-				default:
-					e.errors <- fmt.Errorf("invalid json data: %s", string(n.Params.Data))
-				}
-			case <-e.stop:
-				break Loop
-			}
-		}
-	}()
-	return out, nil
-}
-
-// SubscribeDeribitPriceRanking subscribes to the deribit_price_ranking.{index_name} channel
-func (e *Exchange) SubscribeDeribitPriceRanking(index_name string) (chan *models.DeribitPriceRankingNotification, error) {
-	chans := []string{fmt.Sprintf("deribit_price_ranking.%s", index_name)}
-
-	c := make(chan *RPCNotification)
-	out := make(chan *models.DeribitPriceRankingNotification)
+	out := make(chan *models.DeribitPriceIndexNotification)
 	sub := &RPCSubscription{Data: c, Channel: chans[0]}
 	e.subscriptions[chans[0]] = sub
 
@@ -736,13 +736,13 @@ func (e *Exchange) SubscribeDeribitPriceRanking(index_name string) (chan *models
 				}
 				switch byte(n.Params.Data[0]) {
 				case '{':
-					var ret models.DeribitPriceRankingNotification
+					var ret models.DeribitPriceIndexNotification
 					if err := json.Unmarshal(n.Params.Data, &ret); err != nil {
 						e.errors <- fmt.Errorf("error decoding notification: %s", err)
 					}
 					out <- &ret
 				case '[':
-					var rets []models.DeribitPriceRankingNotification
+					var rets []models.DeribitPriceIndexNotification
 					if err := json.Unmarshal(n.Params.Data, &rets); err != nil {
 						e.errors <- fmt.Errorf("error decoding notification: %s", err)
 					}
