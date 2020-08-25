@@ -4,7 +4,19 @@ forked from [github.com/adampointer/go-deribit](https://github.com/adampointer/g
 
 `import "github.com/cicdteam/go-deribit"`
 
-[GoDoc API Documentation](https://godoc.org/github.com/cicdteam/go-deribit)
+## GoDoc API Documentation
+
+- [go-deribit](https://godoc.org/github.com/cicdteam/go-deribit)
+- [go-deribit/client](https://godoc.org/github.com/cicdteam/go-deribit/client)
+- [go-deribit/client/account_management](https://godoc.org/github.com/cicdteam/go-deribit/client/account_management)
+- [go-deribit/client/internal_swagger](https://godoc.org/github.com/cicdteam/go-deribit/client/internal_swagger)
+- [go-deribit/client/market_data](https://godoc.org/github.com/cicdteam/go-deribit/client/market_data)
+- [go-deribit/client/private](https://godoc.org/github.com/cicdteam/go-deribit/client/private)
+- [go-deribit/client/public](https://godoc.org/github.com/cicdteam/go-deribit/client/public)
+- [go-deribit/client/supporting](https://godoc.org/github.com/cicdteam/go-deribit/client/supporting)
+- [go-deribit/client/trading](https://godoc.org/github.com/cicdteam/go-deribit/client/trading)
+- [go-deribit/client/wallet](https://godoc.org/github.com/cicdteam/go-deribit/client/wallet)
+- [go-deribit/client/websocket_only](https://godoc.org/github.com/cicdteam/go-deribit/client/websocket_only)
 
 ## Overview
 
